@@ -85,7 +85,9 @@
 !ifdef SWITCH_LITE_BOOT_SD
   DEFINE LITE_BOOT_SD_FLAGS    = -DSWITCH_LITE_BOOT_SD=1
   !ifndef SWITCH_LITE_TOUCH
-    !error "SWITCH_LITE_BOOT_SD requires the HDH-001 profile"
+    !ifndef SWITCH_HAC_V2
+      !error "SWITCH_LITE_BOOT_SD requires the HDH-001 profile (or define SWITCH_HAC_V2 for the ordinary Switch profile)"
+    !endif
   !endif
   !ifndef SWITCH_ACPI_SD_NVTSDHC
     !error "SWITCH_LITE_BOOT_SD requires the bounded nvtsdhc Home boot path"
@@ -139,14 +141,18 @@
 !endif
 !ifdef SWITCH_LITE_RESET
   !ifndef SWITCH_LITE_TOUCH
-    !error "SWITCH_LITE_RESET requires the HDH-001 profile"
+    !ifndef SWITCH_HAC_V2
+      !error "SWITCH_LITE_RESET requires the HDH-001 profile (or define SWITCH_HAC_V2 for the ordinary Switch profile)"
+    !endif
   !endif
 !endif
   DEFINE LITE_FAN_FLAGS          =
 !ifdef SWITCH_LITE_FAN
   DEFINE LITE_FAN_FLAGS          = -DSWITCH_LITE_FAN=1
   !ifndef SWITCH_LITE_TOUCH
-    !error "SWITCH_LITE_FAN requires the HDH-001 touch profile"
+    !ifndef SWITCH_HAC_V2
+      !error "SWITCH_LITE_FAN requires the HDH-001 touch profile (or define SWITCH_HAC_V2 for the ordinary Switch profile)"
+    !endif
   !endif
   !ifndef SWITCH_FAN_DUTY
     !error "SWITCH_LITE_FAN requires an initial SWITCH_FAN_DUTY (normally 76)"
@@ -156,7 +162,9 @@
 !ifdef SWITCH_LITE_POWER
   DEFINE LITE_POWER_FLAGS        = -DSWITCH_LITE_POWER=1
   !ifndef SWITCH_LITE_TOUCH
-    !error "SWITCH_LITE_POWER requires the HDH-001 touch profile"
+    !ifndef SWITCH_HAC_V2
+      !error "SWITCH_LITE_POWER requires the HDH-001 touch profile (or define SWITCH_HAC_V2 for the ordinary Switch profile)"
+    !endif
   !endif
 !endif
   DEFINE LITE_TOUCH_FLAGS        =
