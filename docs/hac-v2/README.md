@@ -52,6 +52,25 @@ single-header pairing between BL33 and the Windows `nvtsdhc` miniport are all
 
 ## Stage plan
 
+Build command (BL31 is built once with `Tools/build-t214-atf.py` as in the
+Lite guide; the C/ifdef inputs below select the V2 profile for BL33):
+
+```sh
+build -a AARCH64 -t GCC5 -b RELEASE -n 8 -p NintendoSwitchPkg/NintendoSwitch.dsc \
+  -D SWITCH_HAC_V2=1 -D SWITCH_HEKATE=1 -D SWITCH_FB_ROTATE=2 -D SWITCH_EXCFB=1 \
+  -D SWITCH_ACPI_SD_NVTSDHC=1 -D SWITCH_LITE_BOOT_SD=1 \
+  -D SWITCH_LITE_FAN=1 -D SWITCH_FAN_DUTY=76 \
+  -D SWITCH_LITE_POWER=1 -D SWITCH_LITE_RESET=1 \
+  -D SWITCH_LITE_BLUETOOTH=1 -D SWITCH_WIFI_RUNTIME=1 \
+  -D SWITCH_LITE_BACKLIGHT=1
+```
+
+Deliberately NOT selected in stage 1: `SWITCH_LITE_TOUCH` (must be re-pointed
+to the SWOA0501/`SwitchTouch` HAC path first), `SWITCH_LITE_XUSB`,
+`SWITCH_LITE_SIO`, `SWITCH_LITE_AUDIO`, `SWITCH_LITE_SYSTEM`,
+`SWITCH_LITE_SLEEP`, `SWITCH_LITE_PROCESSOR_IDLE`. See the flag map above for
+the reason each is deferred.
+
 1. **Branch `hac-v2-port`** (this branch): relax DSC gates so the bounded SD
    boot profile can build without the HDH-001-only flags when
    `SWITCH_HAC_V2=1` is passed. Lite profile builds must be unchanged.
