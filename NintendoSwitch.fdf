@@ -135,7 +135,9 @@ READ_LOCK_STATUS   = TRUE
   # Drivers
 !ifndef SWITCH_WOA
 !ifndef SWITCH_LITE_TOUCH
+!ifndef SWITCH_HAC_V2
   INF NintendoSwitchPkg/Drivers/SidebandButtonDxe/SidebandButtonDxe.inf
+!endif
 !endif
 !endif
   INF NintendoSwitchPkg/Drivers/ClockManagementDxe/ClockManagementDxe.inf
@@ -158,8 +160,14 @@ READ_LOCK_STATUS   = TRUE
   INF NintendoSwitchPkg/Drivers/SdMmcDxe/SdMmcDxe.inf
 !ifndef SWITCH_WOA
 !ifndef SWITCH_LITE_TOUCH
+# HAC V2: PinMuxDxe applies a fixed Erista-board GPIO/pingroup/drvgroup table with no SoC or board
+# check, and TouchPanelDxe (its only hard dependent) is the Erista touch path. Like the Lite profile,
+# the V2 profile relies on hekate's pinmux and keeps both out of the image until the V2 board
+# tables are mapped (docs/hac-v2/README.md, stage 2).
+!ifndef SWITCH_HAC_V2
   INF NintendoSwitchPkg/Drivers/PinMuxDxe/PinMuxDxe.inf
   INF NintendoSwitchPkg/Drivers/TouchPanelDxe/TouchPanelDxe.inf
+!endif
 !endif
 !ifdef SWITCH_FAN_DUTY
 !ifdef SWITCH_LITE_FAN

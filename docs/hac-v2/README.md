@@ -25,12 +25,14 @@ Status marker used below: `same`, `adapt`, `generic path exists`, `new work`.
 | `SWITCH_LITE_DISPLAY` / winx-display | Display-only ACPI device for the Windows miniport | `same` idea; keep off until storage boots |
 | `SWITCH_LITE_SLEEP` / `SWITCH_LITE_PROCESSOR_IDLE` | Sleep/wake work | **skip in stage 1** — unaccepted even on the Lite |
 | `SWITCH_LITE_RESET`, `SWITCH_LITE_PERFORMANCE` | Reset/clock management under `t214/` | `same` (T214-common code under `t214/`) |
+| (FDF) `PinMuxDxe`, `TouchPanelDxe`, `SidebandButtonDxe` | Erista-profile drivers the FDF includes whenever neither `SWITCH_WOA` nor `SWITCH_LITE_TOUCH` is set | **excluded for V2** (`!ifndef SWITCH_HAC_V2` in the FDF). `PinMuxDxe` applies a fixed GPIO/pingroup/drvgroup table with no SoC or board check, so linking it would reprogram a V2's pads from an Erista table; hekate's pinmux is relied on instead, as on the Lite. `TouchPanelDxe` is its only hard dependent. Revisit with the V2 pin tables in stage 2 |
 
 Rules preserved:
 
 - `SWITCH_LITE_TOUCH` and `SWITCH_ACPI_SWOA` stay mutually exclusive (DSC
-  `!error`), so the V2 profile must pick one. Stage 1 keeps `SWITCH_LITE_TOUCH`
-  defined (for panel power) and switches the *INF/ACPI* mismatch later.
+  `!error`), so the V2 profile must pick one. Stage 1 defines **neither**
+  (`SWITCH_HAC_V2` replaces `SWITCH_LITE_TOUCH` as the DSC/FDF gate); the touch
+  path is chosen in stage 2 (see the `SWITCH_LITE_TOUCH` row above).
 - Do not use `Tools/build.sh` / `build-woa.sh` defaults: they select the Erista
   profile, which errors against this fork intentionally.
 
@@ -74,7 +76,8 @@ the reason each is deferred.
 1. **Branch `hac-v2-port`** (this branch): relax DSC gates so the bounded SD
    boot profile can build without the HDH-001-only flags when
    `SWITCH_HAC_V2=1` is passed. Lite profile builds must be unchanged.
-2. Build both profiles on the build host and compare the produced BL33 sizes.
+2. ~~Build both profiles and compare sizes.~~ **Done (compile-only), see
+   "Stage 1 build validation".**
 3. Boot bring-up order on the V2 (Hekate level, after BL31):
    framebuffer/console → SD/WINARM boot → UEFI shell → WinPE → Windows.
    Capture serial debug — `SWITCH_SERIAL_` debug exists in the tree.
@@ -83,6 +86,40 @@ the reason each is deferred.
 5. Controls: verify Joy-Con over Bluetooth in Windows before attempting any
    HID gamepad layer, since there is no SIO equivalent.
 6. USB-C host and sleep/wake stay last, mirroring the Lite's acceptance bar.
+
+## Stage 1 build validation (compile-only)
+
+Built with EDK2 `edk2-stable202402` + `patches/edk2/0001`, Ubuntu 24.04
+`aarch64-linux-gnu-gcc` 13.3, `GCC5` profile. The card header was a **synthetic
+stub** (fake GUIDs/serial) because no card image was available; these results
+say the profile compiles and links, nothing about boot behaviour, and the
+produced images must not be flashed.
+
+| Profile | Result | `FVMAIN_COMPACT` (limit 0xE0000) |
+|---|---|---|
+| Stage 1 V2 (command above) | builds | 730,424 B, 79% |
+| Lite (command in `docs/hdh001-home/README.md`) | builds | 796,328 B, 86% |
+
+- Lite regression check: the Lite `TEGRA210_EFI.fd` is byte-identical
+  (same SHA-256) with and without the V2 FDF change, so the gates are inert
+  for non-V2 builds.
+- Image contents were checked in the generated `FVMAIN.inf`, not just the
+  build log: V2 contains `PmicDxe`, `ClockManagementDxe`, `SdMmcDxe`,
+  `SimpleFbDxe`, `LiteFanPower`, `LiteReset` and `LiteBluetooth`; it does not
+  contain `PinMuxDxe`, `TouchPanelDxe` or `SidebandButtonDxe`.
+- The stock EDK2 USB stack (`EhciDxe`, `UsbBus`, `UsbKb`, `UsbMassStorage`) is
+  unconditional in the FDF in every profile; without `SWITCH_USB` there is no
+  PciEmulation to bind it to, so it is inert here as on the Lite.
+- The NTFS driver (`LiteSdTest/ntfs_aa64_ro.efi`) is only linked when
+  `SWITCH_LITE_SYSTEM` is set, so stage 1 does not need it.
+
+### BL31 reuse (unverified)
+
+The T214 ATF patches (`patches/atf`) are selected by the T210B01 chip check, use
+the MAX77620 on I2C5 and, for final power-off, bit-bang the SoC's dedicated
+`PWR_I2C` pads (PY3/PY4). These are SoC-level, not Lite-specific, so reuse on a
+V2 is a reasonable working assumption. Restart and power-off behaviour on a V2
+is unobserved until tested; keep a serial/known-good Hekate path available.
 
 ## Non-goals / known risks
 
